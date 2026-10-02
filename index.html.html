@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DevMatch · Pipeline de produtoras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05060A;
+    --panel: #12121A;
+    --panel-2: #1B1B26;
+    --line: #2A2A38;
+    --text: #F3F3F7;
+    --muted: #9A9AAA;
+    --purple: #6A14E0;
+    --magenta: #E100B4;
+    --pink: #FF0A6C;
+    --red: #FF2A3A;
+    --orange: #FF8010;
+    --gray: #5A5A6B;
+    --grad: linear-gradient(90deg, #6A14E0, #E100B4 30%, #FF0A6C 60%, #FF8010);
+    --font-display: "Outfit", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color-scheme: dark;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
+
+  .wrap { max-width: 1600px; margin: 0 auto; padding: 20px 20px 40px; }
+
+  header.top {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+    padding-bottom: 18px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { display: block; }
+  .wordmark { font-family: var(--font-display); font-weight: 600; font-size: 30px; letter-spacing: -0.02em; line-height: 1; }
+  .wordmark .m { background: linear-gradient(90deg, #E100B4, #FF0A6C 55%, #FF8010); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tagline { color: var(--muted); font-size: 13px; margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--line); }
+
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px 14px; min-width: 96px; }
+  .stat b { display: block; font-family: var(--font-display); font-size: 22px; font-weight: 600; line-height: 1.1; }
+  .stat span { color: var(--muted); font-size: 12px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .search { flex: 1 1 220px; max-width: 340px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; }
+  .search::placeholder { color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; color: var(--muted); }
+  .chip[aria-pressed="true"] { color: var(--text); border-color: transparent; background: linear-gradient(var(--panel-2), var(--panel-2)) padding-box, var(--grad) border-box; border: 1px solid transparent; }
+  .chip small { opacity: .7; margin-left: 4px; }
+
+  .board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x proximity; align-items: flex-start; }
+  .col { flex: 0 0 280px; scroll-snap-align: start; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 230px); min-height: 240px; }
+  .col-strip { height: 5px; background: var(--c); }
+  .col-head { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 14px 8px; }
+  .col-head h2 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .col-head .n { color: var(--muted); font-size: 12px; }
+  .col-body { padding: 4px 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 80px; }
+  .col.over { box-shadow: 0 0 0 2px var(--c) inset; }
+  .empty { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 8px; border: 1px dashed var(--line); border-radius: 12px; }
+
+  .card { background: var(--panel-2); border: 1px solid transparent; border-radius: 12px; padding: 10px 12px; cursor: grab; text-align: left; width: 100%; display: block; }
+  .card:hover { border-color: var(--line); }
+  .card.dragging { opacity: .4; }
+  .card-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .card h3 { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .card p { margin: 3px 0 0; color: var(--muted); font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 9px; gap: 6px; }
+  .tag { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--tc); display: inline-block; }
+  .adv { background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); padding: 2px 8px; cursor: pointer; font-size: 12px; }
+  .adv:hover { color: var(--text); border-color: var(--magenta); }
+  .has-note { color: var(--orange); font-size: 11px; }
+
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 20px; padding: 0; width: min(520px, calc(100vw - 24px)); max-height: calc(100vh - 40px); }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  .dlg-strip { height: 5px; background: var(--grad); }
+  .dlg-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+  .dlg-body h2 { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+  .dlg-body .desc { color: var(--muted); margin: 0; }
+  label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  select, textarea { width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+  textarea { min-height: 96px; resize: vertical; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .link { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; text-decoration: none; color: var(--text); font-size: 13px; }
+  .link:hover { border-color: var(--magenta); }
+  .link.wa { background: linear-gradient(var(--panel-2), var(--panel-2)) padding-box, var(--grad) border-box; border: 1px solid transparent; }
+  .contact-line { color: var(--muted); font-size: 13px; word-break: break-word; margin: 0; }
+  .dlg-actions { display: flex; justify-content: flex-end; }
+  .btn { background: var(--grad); border: 0; color: #fff; font-weight: 600; border-radius: 999px; padding: 9px 22px; cursor: pointer; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 14px 12px 32px; }
+    .tagline { display: none; }
+    .col { flex-basis: 84vw; max-height: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="40" height="34" viewBox="0 0 40 34" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6A14E0"/><stop offset=".45" stop-color="#E100B4"/><stop offset=".75" stop-color="#FF0A6C"/><stop offset="1" stop-color="#FF8010"/>
+          </linearGradient>
+        </defs>
+        <path d="M12 3h10c8 0 14 6 14 14s-6 14-14 14H12c-2 0-3-1-3-3V6c0-2 1-3 3-3z" fill="url(#g)"/>
+        <path d="M14 11l7 6-7 6" fill="none" stroke="#05060A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 11l5 4-5 4" fill="none" stroke="#6A14E0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="wordmark">dev<span class="m">match</span></span>
+      <span class="tagline">Pipeline de produtoras</span>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="q" type="search" placeholder="Buscar produtora, atuação ou contato" aria-label="Buscar">
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por categoria"></div>
+  </div>
+
+  <main class="board" id="board"></main>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg-strip"></div>
+  <div class="dlg-body" id="dlgBody"></div>
+</dialog>
+
+<script>
+(function () {
+  var STAGES = [
+    { id: "prospeccao", name: "Prospecção", color: "#6A14E0" },
+    { id: "contato", name: "Contato feito", color: "#E100B4" },
+    { id: "diagnostico", name: "Diagnóstico", color: "#FF0A6C" },
+    { id: "proposta", name: "Proposta", color: "#FF2A3A" },
+    { id: "fechado", name: "Fechado", color: "#FF8010" },
+    { id: "perdido", name: "Sem interesse", color: "#5A5A6B" }
+  ];
+  var CATS = [
+    { id: "musica", name: "Música e artistas", color: "#E100B4" },
+    { id: "audiovisual", name: "Audiovisual e conteúdo", color: "#6A14E0" },
+    { id: "independentes", name: "Independentes", color: "#FF8010" }
+  ];
+
+  // c = categoria, d = atuação, e = e-mail, t = telefone, n = observação da lista
+  var DATA = [
+    // Música, artistas e entretenimento
+    { name: "Ghetto Produtora", c: "musica", d: "Gestão de carreira, direção artística, shows e projetos musicais", e: "br@ghettoprodutora.com", t: "(11) 96799-2121" },
+    { name: "Love Funk", c: "musica", d: "Música urbana, funk, produção artística, shows e publicidade", e: "publicidadeslove@gmail.com", t: "(11) 94036-3364" },
+    { name: "A&B Produções Artísticas", c: "musica", d: "Produção de espetáculos, gestão artística, eventos e curadoria", e: "atendimento@aebproducoesartisticas.com.br", t: "(11) 2642-2000" },
+    { name: "4 A Cena", c: "musica", d: "Shows, eventos, experiências de marca e audiovisual", e: "comercial@4acena.com.br", t: "(11) 95280-0645" },
+    { name: "UMA Produtora", c: "musica", d: "Produção musical", t: "(11) 97256-0101" },
+    { name: "Pontual Digital", c: "musica", d: "Produção musical e serviços criativos", t: "(11) 98306-3530" },
+    { name: "Empório Audiovisual", c: "musica", d: "Produção audiovisual e eventos", t: "(11) 94723-6477" },
+
+    // Audiovisuais e de conteúdo
+    { name: "Coração da Selva", c: "audiovisual", d: "Cinema, televisão, conteúdo e produção audiovisual", e: "contato@coracaodaselva.com.br", t: "(11) 3814-2025" },
+    { name: "Moonshot Creative Lab", c: "audiovisual", d: "Produção audiovisual e projetos criativos", e: "moonshot@moonshot.com.br", t: "(11) 3666-5776" },
+    { name: "Medialand", c: "audiovisual", d: "Produção de televisão e conteúdo", e: "carla@medialand.com.br", t: "(11) 3774-0630" },
+    { name: "Academia de Filmes", c: "audiovisual", d: "Publicidade, documentários e produção audiovisual", e: "paulo@academiadefilmes.com.br", t: "(11) 3376-0707" },
+    { name: "Cinefilm", c: "audiovisual", d: "Produção cinematográfica", e: "flavio@cinefilm.com.br", t: "(11) 3045-5344" },
+    { name: "Confeitaria de Cinema", c: "audiovisual", d: "Produção cinematográfica", e: "rrewald@uol.com.br", t: "(11) 3865-2525" },
+    { name: "Cine Cinematográfica", c: "audiovisual", d: "Produção audiovisual publicitária", e: "cine@cine.com.br", t: "(11) 3819-1666" },
+    { name: "Bravura Cinematográfica", c: "audiovisual", d: "Produção cinematográfica", t: "(11) 3030-0033" },
+    { name: "Casablanca", c: "audiovisual", d: "Produção e serviços audiovisuais, finalização e efeitos", e: "siaretta@casablancatv.com.br", t: "(11) 5056-8383" },
+    { name: "Floresta Produções", c: "audiovisual", d: "Produção audiovisual e cinematográfica", e: "floresta@florestaprod.com.br", t: "(11) 3087-8630" },
+    { name: "Gullane", c: "audiovisual", d: "Cinema, televisão e produção audiovisual", e: "gullane@gullane.com", t: "(11) 5084-0996" },
+    { name: "Ioio Filmes", c: "audiovisual", d: "Produção audiovisual", e: "projetos@ioiofilmes.com", t: "(11) 5696-4700" },
+    { name: "Bossa Nova Films", c: "audiovisual", d: "Produção audiovisual e conteúdo", n: "Contato no diretório do SIAESP" },
+    { name: "Mymama", c: "audiovisual", d: "Produção audiovisual e cinematográfica", t: "(11) 3897-5333" },
+    { name: "Cine 2 Produções", c: "audiovisual", d: "Produção cinematográfica", n: "Contato no diretório do SIAESP" },
+    { name: "44 Toons", c: "audiovisual", d: "Produção artística e animação", n: "Contato pelo site" },
+    { name: "Barry Company", c: "audiovisual", d: "Produção audiovisual", n: "Contato no diretório do SIAESP" },
+    { name: "Beleza Nation", c: "audiovisual", d: "Conteúdo e filmes", n: "Contato no diretório do SIAESP" },
+    { name: "Cine Vídeo Support", c: "audiovisual", d: "Infraestrutura, estúdios e equipamentos audiovisuais", e: "caetano@cinevideobr.com.br", t: "(11) 5080-5322" },
+    { name: "Estúdios Quanta", c: "audiovisual", d: "Estúdios, equipamentos e infraestrutura para produção", e: "contato@estudiosquanta.com.br", t: "(11) 3645-1922" },
+
+    // Independentes de vídeo, publicidade e eventos
+    { name: "Produtora de Cinema e Filmes Associados", c: "independentes", d: "Cinema e conteúdo para TV", n: "R. Capote Valente, 1332, Pinheiros" },
+    { name: "Norte Produtora de Audiovisual", c: "independentes", d: "Produção de vídeos", t: "(11) 91780-0233" },
+    { name: "Wave Filmes", c: "independentes", d: "Produção audiovisual", n: "R. Borges de Figueiredo, 303, Mooca" },
+    { name: "Produtora Brasileira", c: "independentes", d: "Produção cinematográfica e conteúdo para TV", t: "(11) 3288-7602" },
+    { name: "DMCTV", c: "independentes", d: "Produção de filmes e vídeos", t: "(11) 2574-6800" },
+    { name: "Casarela Filmes", c: "independentes", d: "Produção de vídeos", t: "(11) 96636-7696" },
+    { name: "Ponto Dois Comunicação", c: "independentes", d: "Audiovisual e transmissão ao vivo", t: "(11) 91780-2900" },
+    { name: "Olhos em Foco", c: "independentes", d: "Produção audiovisual", t: "(11) 98572-1383" },
+    { name: "Annik Buzian Casting & Research", c: "independentes", d: "Casting e pesquisa para produções", t: "(11) 99199-9793" },
+    { name: "Nathan Filmes", c: "independentes", d: "Produção de vídeos", t: "(11) 94752-5924" },
+    { name: "DC Studio", c: "independentes", d: "Filmagem, fotografia, eventos corporativos e lives", t: "(11) 97686-3387" },
+    { name: "Casa de Vídeo e Criação", c: "independentes", d: "Produção de vídeos e criação", t: "(11) 3801-1173" },
+    { name: "Sweet Filmes", c: "independentes", d: "Produção audiovisual", t: "(11) 99483-5244" },
+    { name: "WEARERV", c: "independentes", d: "Produção de vídeos", t: "(11) 96930-0731" },
+    { name: "Sequência Filmes", c: "independentes", d: "Produção de vídeos", t: "(11) 97065-8821" },
+    { name: "Produtora Cultural", c: "independentes", d: "Produção e organização de eventos", t: "(11) 95682-5081" },
+    { name: "CPCi Produtora Digital", c: "independentes", d: "Produção digital e design", t: "(11) 2307-3258" }
+  ];
+  DATA.forEach(function (x, i) { x.id = "p" + (i + 1); });
+
+  var KEY = "devmatch-pipeline-v1";
+  var state = { stage: {}, note: {} };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var p = JSON.parse(raw); state.stage = p.stage || {}; state.note = p.note || {}; }
+  } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var filterCat = "all", query = "";
+  var $board = document.getElementById("board");
+  var $chips = document.getElementById("chips");
+  var $stats = document.getElementById("stats");
+  var $dlg = document.getElementById("dlg");
+  var $dlgBody = document.getElementById("dlgBody");
+
+  function stageOf(id) { return state.stage[id] || "prospeccao"; }
+  function catOf(id) { return CATS.filter(function (c) { return c.id === id; })[0]; }
+  function digits(s) { return (s || "").replace(/\D/g, ""); }
+  function isMobile(t) { var d = digits(t); return d.length === 11 && d.charAt(2) === "9"; }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  function visible(x) {
+    if (filterCat !== "all" && x.c !== filterCat) return false;
+    if (!query) return true;
+    var hay = (x.name + " " + x.d + " " + (x.e || "") + " " + (x.t || "") + " " + (x.n || "")).toLowerCase();
+    return hay.indexOf(query) !== -1;
+  }
+
+  function renderChips() {
+    var items = [{ id: "all", name: "Todas", count: DATA.length }].concat(CATS.map(function (c) {
+      return { id: c.id, name: c.name, count: DATA.filter(function (x) { return x.c === c.id; }).length };
+    }));
+    $chips.innerHTML = items.map(function (c) {
+      return '<button class="chip" data-cat="' + c.id + '" aria-pressed="' + (filterCat === c.id) + '">' + esc(c.name) + '<small>' + c.count + '</small></button>';
+    }).join("");
+  }
+
+  function renderStats() {
+    var total = DATA.length;
+    var counts = {};
+    DATA.forEach(function (x) { var s = stageOf(x.id); counts[s] = (counts[s] || 0) + 1; });
+    var contacted = total - (counts.prospeccao || 0);
+    var items = [
+      ["Produtoras", total],
+      ["Já contatadas", contacted],
+      ["Em proposta", counts.proposta || 0],
+      ["Fechadas", counts.fechado || 0]
+    ];
+    $stats.innerHTML = items.map(function (i) { return '<div class="stat"><b>' + i[1] + '</b><span>' + i[0] + '</span></div>'; }).join("");
+  }
+
+  function renderBoard() {
+    $board.innerHTML = STAGES.map(function (s, idx) {
+      var cards = DATA.filter(function (x) { return stageOf(x.id) === s.id && visible(x); });
+      var total = DATA.filter(function (x) { return stageOf(x.id) === s.id; }).length;
+      var body = cards.length ? cards.map(function (x) { return cardHTML(x, idx); }).join("") : '<div class="empty">Arraste uma produtora para cá</div>';
+      return '<section class="col" data-stage="' + s.id + '" style="--c:' + s.color + '">' +
+        '<div class="col-strip"></div>' +
+        '<div class="col-head"><h2>' + s.name + '</h2><span class="n">' + (cards.length === total ? total : cards.length + " de " + total) + '</span></div>' +
+        '<div class="col-body">' + body + '</div></section>';
+    }).join("");
+  }
+
+  function cardHTML(x, idx) {
+    var c = catOf(x.c);
+    var next = idx < STAGES.length - 2 ? '<span class="adv" role="button" tabindex="0" data-adv="' + x.id + '" aria-label="Avançar ' + esc(x.name) + ' para ' + STAGES[idx + 1].name + '">Avançar ›</span>' : "";
+    return '<div class="card" draggable="true" tabindex="0" role="button" data-id="' + x.id + '">' +
+      '<div class="card-top"><h3>' + esc(x.name) + '</h3></div>' +
+      '<p>' + esc(x.d) + '</p>' +
+      '<div class="card-foot"><span class="tag" style="--tc:' + c.color + '"><i></i>' + esc(c.name) + '</span>' +
+      (state.note[x.id] ? '<span class="has-note">com nota</span>' : "") + next + '</div></div>';
+  }
+
+  function refresh() { renderStats(); renderBoard(); }
+
+  function openCard(id) {
+    var x = DATA.filter(function (d) { return d.id === id; })[0];
+    if (!x) return;
+    var links = "";
+    if (x.e) links += '<a class="link" href="mailto:' + esc(x.e) + '">E-mail</a>';
+    if (x.t) {
+      links += '<a class="link" href="tel:+55' + digits(x.t) + '">Ligar</a>';
+      if (isMobile(x.t)) links += '<a class="link wa" href="https://wa.me/55' + digits(x.t) + '" target="_blank" rel="noopener">WhatsApp</a>';
+    }
+    var lines = "";
+    if (x.e) lines += '<p class="contact-line">' + esc(x.e) + '</p>';
+    if (x.t) lines += '<p class="contact-line">' + esc(x.t) + '</p>';
+    if (x.n) lines += '<p class="contact-line">' + esc(x.n) + '</p>';
+    var opts = STAGES.map(function (s) { return '<option value="' + s.id + '"' + (stageOf(id) === s.id ? " selected" : "") + '>' + s.name + '</option>'; }).join("");
+    $dlgBody.innerHTML =
+      '<div><h2>' + esc(x.name) + '</h2><p class="desc">' + esc(x.d) + '</p></div>' +
+      lines +
+      (links ? '<div class="links">' + links + '</div>' : "") +
+      '<div><label for="stSel">Etapa</label><select id="stSel">' + opts + '</select></div>' +
+      '<div><label for="noteTa">Anotações</label><textarea id="noteTa" placeholder="Quem atendeu, o que foi combinado, próximo passo">' + esc(state.note[id] || "") + '</textarea></div>' +
+      '<div class="dlg-actions"><button class="btn" id="closeBtn">Salvar e fechar</button></div>';
+    var sel = document.getElementById("stSel"), ta = document.getElementById("noteTa");
+    sel.addEventListener("change", function () { state.stage[id] = sel.value; save(); refresh(); });
+    ta.addEventListener("input", function () { if (ta.value.trim()) state.note[id] = ta.value; else delete state.note[id]; save(); });
+    ta.addEventListener("blur", refresh);
+    document.getElementById("closeBtn").addEventListener("click", function () { $dlg.close(); });
+    if (typeof $dlg.showModal === "function") $dlg.showModal(); else $dlg.setAttribute("open", "");
+  }
+  $dlg.addEventListener("close", refresh);
+  $dlg.addEventListener("click", function (e) { if (e.target === $dlg) $dlg.close(); });
+
+  function advance(id) {
+    var i = STAGES.findIndex(function (s) { return s.id === stageOf(id); });
+    if (i < STAGES.length - 2) { state.stage[id] = STAGES[i + 1].id; save(); refresh(); }
+  }
+
+  $board.addEventListener("click", function (e) {
+    var adv = e.target.closest("[data-adv]");
+    if (adv) { e.stopPropagation(); advance(adv.getAttribute("data-adv")); return; }
+    var card = e.target.closest(".card");
+    if (card) openCard(card.getAttribute("data-id"));
+  });
+  $board.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    var adv = e.target.closest("[data-adv]");
+    if (adv) { e.preventDefault(); advance(adv.getAttribute("data-adv")); return; }
+    var card = e.target.closest(".card");
+    if (card && e.target === card) { e.preventDefault(); openCard(card.getAttribute("data-id")); }
+  });
+
+  var dragId = null;
+  $board.addEventListener("dragstart", function (e) {
+    var card = e.target.closest(".card");
+    if (!card) return;
+    dragId = card.getAttribute("data-id");
+    card.classList.add("dragging");
+    try { e.dataTransfer.setData("text/plain", dragId); e.dataTransfer.effectAllowed = "move"; } catch (err) {}
+  });
+  $board.addEventListener("dragend", function () {
+    dragId = null;
+    Array.prototype.forEach.call($board.querySelectorAll(".dragging,.over"), function (n) { n.classList.remove("dragging"); n.classList.remove("over"); });
+  });
+  $board.addEventListener("dragover", function (e) {
+    var col = e.target.closest(".col");
+    if (!col || !dragId) return;
+    e.preventDefault();
+    Array.prototype.forEach.call($board.querySelectorAll(".over"), function (n) { if (n !== col) n.classList.remove("over"); });
+    col.classList.add("over");
+  });
+  $board.addEventListener("drop", function (e) {
+    var col = e.target.closest(".col");
+    if (!col || !dragId) return;
+    e.preventDefault();
+    state.stage[dragId] = col.getAttribute("data-stage");
+    save();
+    dragId = null;
+    refresh();
+  });
+
+  $chips.addEventListener("click", function (e) {
+    var b = e.target.closest(".chip");
+    if (!b) return;
+    filterCat = b.getAttribute("data-cat");
+    renderChips();
+    renderBoard();
+  });
+  document.getElementById("q").addEventListener("input", function (e) {
+    query = e.target.value.trim().toLowerCase();
+    renderBoard();
+  });
+
+  renderChips();
+  refresh();
+})();
+</script>
+</body>
+</html>
